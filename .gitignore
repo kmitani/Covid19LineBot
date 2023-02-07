@@ -15,7 +15,18 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
 
 # Go workspace file
 go.work
+
+# その他、不要ファイル
+.DS_Store
+docker-compose.yaml
+env.json
+samconfig.toml
+build.toml
+template.yaml
+.vscode
+Makefile
+.aws-sam
