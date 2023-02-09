@@ -48,10 +48,10 @@ func handler(ctx context.Context) (string, error) {
 	ratio_npatients := pkg.Calc_ratio(average_npatients_new)
 
 	// 前日比平均を計算
-	days_get := 3      // days_get日分の平均を計算
+	days_calc := 3     // days_calc日分の平均を計算
 	days_geomean := 14 // 平均に使う日数
 	var geomean_ratio []float64
-	for i := 0; i < days_get; i++ {
+	for i := 0; i < days_calc; i++ {
 		v := pkg.Calc_geometric_mean(ratio_npatients[i : days_geomean+i])
 		geomean_ratio = append(geomean_ratio, v)
 	}
@@ -60,16 +60,9 @@ func handler(ctx context.Context) (string, error) {
 	// state_infection{1: increase, 0: stable, -1: decrease}
 	threshold := 0.01
 	var state_infection []int
-	for i := 0; i < days_get; i++ {
-		is_increase := geomean_ratio[i] > (1 + threshold)
-		is_decrease := geomean_ratio[i] < (1 - threshold)
-		if is_increase {
-			state_infection = append(state_infection, 1)
-		} else if is_decrease {
-			state_infection = append(state_infection, -1)
-		} else {
-			state_infection = append(state_infection, 0)
-		}
+	for i := 0; i < days_calc; i++ {
+		tmp_state := calc_state(geomean_ratio[i], threshold)
+		state_infection = append(state_infection, tmp_state)
 	}
 	is_state_change := state_infection[0] - state_infection[1]
 
@@ -86,4 +79,18 @@ func handler(ctx context.Context) (string, error) {
 		pkg.PostLineMessage(userid, text, line_auth.Secret, line_auth.Token)
 	}
 	return "", nil
+}
+
+func calc_state(geomean_ratio float64, threshold float64) int {
+	var state_infection int
+	is_increase := geomean_ratio > (1 + threshold)
+	is_decrease := geomean_ratio < (1 - threshold)
+	if is_increase {
+		state_infection = 1
+	} else if is_decrease {
+		state_infection = -1
+	} else {
+		state_infection = 0
+	}
+	return state_infection
 }
